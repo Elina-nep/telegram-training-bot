@@ -1,5 +1,3 @@
-import { allData } from "../database/database.js";
-
 const stopOptions = {
   reply_markup: JSON.stringify({
     inline_keyboard: [
@@ -11,17 +9,54 @@ const stopOptions = {
   }),
 };
 
-export const stopUserBot = async (bot, msg) => {
-  if (allData[msg.from.id] && allData[msg.from.id].active) {
+export const stopUserBot = async (bot, msg, chatData) => {
+  if (chatData[msg.from.id] && chatData[msg.from.id].active) {
     await bot.sendSticker(
       msg.chat.id,
-      "https://tlgrm.ru/_/stickers/76b/77d/76b77dbb-5b99-39f3-904f-ca92ba9af20b/256/13.webp",
+      "https://tlgrm.ru/_/stickers/76b/77d/76b77dbb-5b99-39f3-904f-ca92ba9af20b/8.webp",
     );
-    return bot.sendMessage(
+    await bot.sendMessage(
       msg.chat.id,
       `Правда хочешь приостановить наше общение?`,
       stopOptions,
     );
+    return bot.on("callback_query", async (buttonMsg) => {
+      switch (buttonMsg.data) {
+        case "yesToStop": {
+          chatData[buttonMsg.from.id].active = false;
+          const daysMissed = chatData[buttonMsg.from.id].calcDebt(
+            new Date().setHours(0, 0, 0, 0),
+          );
+          await bot.sendSticker(
+            msg.chat.id,
+            "https://tlgrm.ru/_/stickers/76b/77d/76b77dbb-5b99-39f3-904f-ca92ba9af20b/256/13.webp",
+          );
+          return bot.sendMessage(
+            buttonMsg.message.chat.id,
+            `Жаль, возвращайся! ${
+              daysMissed ? "Ты пропустил тренировку, записан долг" : ""
+            }`,
+          );
+        }
+
+        case "noToStop": {
+          await bot.sendSticker(
+            msg.chat.id,
+            "https://tlgrm.ru/_/stickers/76b/77d/76b77dbb-5b99-39f3-904f-ca92ba9af20b/10.webp",
+          );
+          return bot.sendMessage(
+            buttonMsg.message.chat.id,
+            `Рад, что ты передумала`,
+          );
+        }
+
+        default:
+          return bot.sendMessage(
+            buttonMsg.message.chat.id,
+            `не понял, попробуй ещё раз`,
+          );
+      }
+    });
   }
   return bot.sendMessage(msg.chat.id, `Мы и так не общаемся`);
 };
