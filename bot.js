@@ -5,6 +5,7 @@ import { allData } from "./database/database.js";
 import {
   startUserBot,
   stopUserBot,
+  stopButtonsProcess,
   getStatistics,
   addTrain,
   reactOnFile,
@@ -72,31 +73,14 @@ export const start = async () => {
   bot.on("photo", async (msg) => {
     reactOnFile(bot, msg, allData[msg.chat.id]);
   });
+  bot.on("video", async (msg) => {
+    reactOnFile(bot, msg, allData[msg.chat.id]);
+  });
 
-  // bot.on("callback_query", async (msg) => {
-  //   const data = msg.data;
-  //   const chatId = msg.message.chat.id;
-
-  //   switch (data) {
-  //     case 'yesToStop': {
-  //       return
-  //     }
-  //   }
-  //   if (data === "/again") {
-  //     return startGame(chatId);
-  //   }
-  //   if (data == chats[chatId]) {
-  //     await bot.sendMessage(
-  //       chatId,
-  //       `Поздравляю, ты отгадал цифру ${chats[chatId]}`,
-  //       againOptions,
-  //     );
-  //   } else {
-  //     await bot.sendMessage(
-  //       chatId,
-  //       `К сожалению ты не угадал, бот загадал цифру ${chats[chatId]}`,
-  //       againOptions,
-  //     );
-  //   }
-  // });
+  bot.on("callback_query", async (buttonMsg) => {
+    if (!allData[buttonMsg.message.chat.id]) {
+      allData[buttonMsg.message.chat.id] = {};
+    }
+    stopButtonsProcess(bot, buttonMsg, allData[buttonMsg.message.chat.id]);
+  });
 };
